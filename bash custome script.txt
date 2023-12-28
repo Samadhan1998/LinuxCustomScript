@@ -1,0 +1,104 @@
+bash script -
+#!/bin/bash
+
+# Function to display CPU information
+function cpu_getinfo() {
+    lscpu
+}
+
+# Function to display memory information
+function memory_getinfo() {
+    free
+}
+
+# Function to create a new user
+function user_create() {
+    username=$1
+    sudo useradd -m $username
+}
+
+# Function to list all users
+function user_list() {
+    if [ "$1" == "--sudo-only" ]; then
+        getent passwd {1000..60000} | cut -d: -f1,3,4 | grep ' /bin/bash'
+    else
+        getent passwd {1000..60000} | cut -d: -f1,3,4
+    fi
+}
+
+# Function to get file information
+function file_getinfo() {
+    file=$1
+    size=$(stat --format=%s $file)
+    permissions=$(stat --format=%A $file)
+    owner=$(stat --format=%U $file)
+    last_modified=$(stat --format=%y $file)
+
+    if [ "$2" == "--size" ] || [ "$2" == "-s" ]; then
+        echo $size
+    elif [ "$2" == "--permissions" ] || [ "$2" == "-p" ]; then
+        echo $permissions
+    elif [ "$2" == "--owner" ] || [ "$2" == "-o" ]; then
+        echo $owner
+    elif [ "$2" == "--last-modified" ] || [ "$2" == "-m" ]; then
+        echo $last_modified
+    else
+        echo "Invalid option. Use --size, --permissions, --owner, or --last-modified."
+    fi
+}
+
+# Main script
+case "$1" in
+    "cpu" )
+        case "$2" in
+            "getinfo" )
+                cpu_getinfo
+                ;;
+            * )
+                echo "Invalid CPU command."
+                ;;
+        esac
+        ;;
+    "memory" )
+        case "$2" in
+            "getinfo" )
+                memory_getinfo
+                ;;
+            * )
+                echo "Invalid memory command."
+                ;;
+        esac
+        ;;
+    "user" )
+        case "$2" in
+            "create" )
+                user_create $3
+                ;;
+            "list" )
+                user_list $3
+                ;;
+            * )
+                echo "Invalid user command."
+                ;;
+        esac
+        ;;
+    "file" )
+        case "$2" in
+            "getinfo" )
+                file_getinfo $3 $4
+                ;;
+            * )
+                echo "Invalid file command."
+                ;;
+        esac
+        ;;
+    "--version" )
+        echo "internsctl v0.1.0"
+        ;;
+    "--help" )
+        # Display help information
+        ;;
+    * )
+        echo "Invalid command. Use --help for usage guidelines."
+        ;;
+esac
